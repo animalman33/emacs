@@ -1,2 +1,2 @@
 # emacs
-Just my emacs fileacs
+Just my emacs file
