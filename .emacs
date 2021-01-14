@@ -22,6 +22,8 @@
     ivy-yasnippet
     delight
     elpy
+    neotree
+    flycheck
     )
   )
 ;;function to install packages
@@ -44,7 +46,10 @@
 
 ;;elpy
 (elpy-enable)
+(setq elpy-rpc-python-command "python3")
 
+;;flycheck
+(global-flycheck-mode)
 ;;remove garbage from buffer
 (delight '((abbrev-mode nil abbrev)
 	   (ivy-mode nil ivy)
@@ -52,26 +57,20 @@
 	   (iront-mode nil irony)
 	   (yas-minor-mode nil yasnippter)))
 
-;;set things up for UB CSE
-
-(add-hook 'c-mode-hook 'ub-cse-c-mode)
-(add-hook 'c++-mode-hook 'ub-cse-c-mode)
-
 ;;show matching delimters
 (show-paren-mode)
 
 ;;add matching closing delimiter
 (electric-pair-mode)
 
-(defun ub-cse-prog-mode ()
-  (if (boundp 'display-line-number-mode)
-      (display-line-number-mode)
-    (linum-mode 1))
-  ;;make trailing white space visiable for trimming
-  (setq show-trailing-whitespace 1))
-;;call function in prog mode
-(add-hook 'prog-mode-hook 'ub-cse-prog-mode)
+;;make trailing white space visiable for trimming
+(setq-default show-trailing-whitespace t)
+
+;;set line numbers to be shown
+(global-linum-mode t)
 
 ;;custom keybinding
 (global-set-key (kbd "M-s") 'shell)
 (global-set-key (kbd "M-g") 'gdb)
+(global-set-key (kbd "M-t") 'neotree-show)
+(global-set-key (kbd "C-l") 'goto-line)
