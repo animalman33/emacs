@@ -14,18 +14,26 @@
 (setq custom-file "~/.emacs.d/emacs-custom.el")
 (load custom-file)
 
+
 ;;package list for install
 (defvar myPackages
   '(ivy
     yasnippet
-    sublime-themes
+    doom-themes
     ivy-yasnippet
     delight
     elpy
     neotree
     flycheck
+    company
+    company-irony
     )
   )
+
+;;refreshes package list
+(unless package-archive-contents
+  (package-refresh-contents))
+
 ;;function to install packages
 (mapc #'(lambda (package)
 	  (unless (package-installed-p package)
@@ -33,7 +41,17 @@
       myPackages)
 
 ;;set theme
-(load-theme 'spolsky t)
+(load-theme 'doom-acario-dark t)
+
+;;irony
+(add-hook 'c++-mode-hook 'irony-mode)
+(add-hook 'c-mode-hook 'irony-mode)
+(add-hook 'objc-mode-hook 'irony-mode)
+
+;;company
+(add-hook 'after-init-hook 'global-company-mode)
+(eval-after-load 'company
+  '(add-to-list 'company-backends 'company-irony))
 
 ;;ivy mode
 (ivy-mode 1)
@@ -50,6 +68,7 @@
 
 ;;flycheck
 (global-flycheck-mode)
+
 ;;remove garbage from buffer
 (delight '((abbrev-mode nil abbrev)
 	   (ivy-mode nil ivy)
@@ -68,6 +87,9 @@
 
 ;;set line numbers to be shown
 (global-linum-mode t)
+
+;;set cursor
+(setq-default cursor-type 'bar)
 
 ;;custom keybinding
 (global-set-key (kbd "M-s") 'shell)
