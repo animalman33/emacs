@@ -3,6 +3,10 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
+
+;; save all cache stuff into .cache
+(setq user-emacs-directory (expand-file-name "~/.cache/emacs"))
+
 ;;font
 (set-face-attribute 'default nil :height 140)
 
@@ -16,9 +20,19 @@
 (setq-default show-trailing-whitespace t)
 
 ;;set line numbers to be shown
-(setq display-line-numbers 'relative)
-(global-linum-mode t)
+(setq display-line-numbers-type 'relative)
+(global-display-line-numbers-mode)
 
+;; keep emacs clean
+(setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
+
+(make-directory (expand-file-name "tmp/auto-saves" user-emacs-directory) t)
+
+(setq auto-save-list-file-prefix (expand-file-name "tmp/auto-saves/sessions/" user-emacs-directory)
+      auto-save-file-name-transforms `((".*" ,(expand-file-name "tmp/auto-saves/" user-emacs-directory) t)))
+
+
+(setq create-lockfiles nil)
 
 ;;setup package manager
 (require 'package)
@@ -91,6 +105,11 @@
 
 (use-package ivy
   :ensure t
+  :bind (
+	 :map ivy-minibuffer-map
+	 ("C-j" . ivy-next-line)
+	 ("C-k" . ivy-previous-line)
+	 )
   )
 
 (use-package counsel
@@ -161,6 +180,8 @@
 	)
 
   (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
+  (setq dashboard-set-init-info t)
+  (setq dashboard-set-navigator t)
   (setq dashboard-set-heading-icons t)
   (setq dashboard-set-file-icons t)
   )
@@ -188,7 +209,7 @@
   :hook (
 	 (c-mode . lsp)
 	 (c++-mode . lsp)
-	 (rust-mode-hook . lsp)
+	 (rust-mode . lsp)
 	 (go-mode-hook . lsp)
 	 (lsp-mode . lsp-enable-which-key-integration)
 	 )
@@ -249,7 +270,7 @@
 (use-package rust-mode
   :ensure t
   :config
-  (setq rust-format-on-save t))
+  )
 
 (use-package go-mode
   :ensure t)
@@ -258,8 +279,17 @@
   :ensure t
   :after evil
   :config
+  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
   (evil-set-undo-system 'undo-tree)
   (global-undo-tree-mode 1)
+  )
+
+;; get the correct path
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (when (daemonp)
+    (exec-path-from-shell-initialize))
   )
 
 (add-hook 'org-mode 'flyspell-mode)
