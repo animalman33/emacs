@@ -292,4 +292,3 @@
     (exec-path-from-shell-initialize))
   )
 
-(add-hook 'org-mode 'flyspell-mode)
