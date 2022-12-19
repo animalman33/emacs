@@ -212,6 +212,7 @@
 	 (rust-mode . lsp)
 	 (go-mode-hook . lsp)
 	 (lsp-mode . lsp-enable-which-key-integration)
+	 (html-mode . lsp)
 	 )
   :config
   (general-define-key
@@ -292,3 +293,35 @@
     (exec-path-from-shell-initialize))
   )
 
+(use-package evil-surround
+  :ensure t
+  :config
+  (global-evil-surround-mode 1)
+  )
+
+(use-package dockerfile-mode
+  :ensure t)
+
+(use-package docker
+  :ensure t
+  :config
+  (general-define-key
+   :states '(normal visual)
+   :prefix "SPC"
+   "dc" 'docker
+   )
+  )
+
+(use-package poetry
+  :ensure t
+  )
+
+(use-package vterm-toggle
+  :ensure t
+  :config
+  (general-define-key
+   :states '(normal visual)
+   :prefix "SPC"
+   "tt" 'docker
+   )
+  )
