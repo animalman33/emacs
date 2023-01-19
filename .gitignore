@@ -1,0 +1,11 @@
+auto-save-list/
+eln-cache/
+elpa/
+emacs-custom.el
+projectile-bookmarks.eld
+recentf
+settings.el
+settings.eln
+snippets
+transient
+undo
