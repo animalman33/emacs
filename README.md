@@ -1,2 +1,2 @@
-# Home Folder
-Just my home folder config files
+# Emacs
+Basic emacs config
