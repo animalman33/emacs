@@ -135,7 +135,7 @@
 			      (agenda . 5)
 			      )
 	    )
-
+      ;; (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
       (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
       (setq dashboard-set-init-info t)
       (setq dashboard-set-navigator t)
@@ -155,42 +155,45 @@
     :init
     (global-page-break-lines-mode)
     )
-
-  ;; (use-package vterm
-  ;;   :ensure t)
 #+end_src
 * Ivy and Projectile
 #+begin_src emacs-lisp
-  (use-package ivy
+  (use-package vertico
     :ensure t
-    :bind (
-	   :map ivy-minibuffer-map
-	   ("C-j" . ivy-next-line)
-	   ("C-k" . ivy-previous-line)
-	   )
+    :init (vertico-mode)
+    :bind (:map vertico-map
+	  ("C-j" . vertico-next)
+	  ("C-k" . vertico-previous)
+     )
+    :config
+    (general-define-key
+     :states '(normal visual)
+     :prefix "SPC"
+     "ff" 'find-file)
     )
 
-  (use-package counsel
+  (use-package marginalia
     :ensure t
-    :bind ("M-x" . counsel-M-x)
-    :init
-    (general-define-key
-    :states '(normal visual)
-    :prefix "SPC"
-    "ff" 'counsel-find-file)
-    )
-  (use-package counsel-projectile
+    :bind (:map minibuffer-local-map
+	  ("M-A" . marginalia-cycle)
+	  )
+    :init (marginalia-mode))
+
+  (use-package orderless
     :ensure t
-    :init
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-overrides '((file (styles basic partial-completion)))))
+
+  (use-package consult
+    :ensure t
+    :config
     (general-define-key
      :states '(normal visual)
      :prefix "SPC"
-     "pp" 'counsel-projectile-switch-project)
-    (general-define-key
-     :states '(normal visual)
-     :prefix "SPC"
-     "fg" 'counsel-projectile-rg)
+     "fw" 'consult-ripgrep)
     )
+
   (use-package which-key
     :ensure t
     :init (which-key-mode)
@@ -207,128 +210,125 @@
 #+end_src
 * Development tools
 #+begin_src emacs-lisp
-  (use-package flycheck
-    :ensure t
-    )
-  (use-package company
-    :ensure t
-    :after lsp-mode
-    :hook ('after-init-hook 'global-company-mode)
-    :custom
-    (company-minimum-prefix-length 1)
-    (company-idle-delay 0.0)
+    (use-package flycheck
+      :ensure t
+      )
+    (use-package company
+      :ensure t
+      :after lsp-mode
+      :hook ('after-init-hook 'global-company-mode)
+      :custom
+      (company-minimum-prefix-length 1)
+      (company-idle-delay 0.0)
+      )
+
+    (use-package magit
+      :ensure t
+      :config
+      (general-define-key
+       :states '(normal visual)
+       :prefix "SPC"
+       "mg" 'magit
+       )
+      )
+
+    (use-package tree-sitter
+      :ensure t
+      )
+
+    (use-package tree-sitter-langs
+      :ensure t
+      :config
+      (require 'tree-sitter-langs)
+      (global-tree-sitter-mode)
+      (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
     )
 
-  (use-package magit
-    :ensure t
-    :config
-    (general-define-key
-     :states '(normal visual)
-     :prefix "SPC"
-     "mg" 'magit
-     )
-    )
-
-  (use-package tree-sitter
-    :ensure t
-    )
-
-  (use-package tree-sitter-langs
-    :ensure t
-    :config
-    (require 'tree-sitter-langs)
-    (global-tree-sitter-mode)
-    (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-  )
-
-  ;; get the correct path
-  (use-package exec-path-from-shell
-    :ensure t
-    :config
-    (when (daemonp)
-(exec-path-from-shell-initialize))
-    )
+    ;; get the correct path
+    (use-package exec-path-from-shell
+      :ensure t
+      :config
+      (when (daemonp)
+	(exec-path-from-shell-initialize))
+      )
 
 #+end_src
 * Snippets
 #+begin_src emacs-lisp
-    (use-package yasnippet
-      :ensure t
-      :init
-      (add-hook 'prog-mode-hook #'yas-minor-mode)
-      )
+  (use-package yasnippet
+    :ensure t
+    :init
+    (add-hook 'prog-mode-hook #'yas-minor-mode)
+    )
 
-    (use-package yasnippet-snippets
-      :ensure t)
+  (use-package yasnippet-snippets
+    :ensure t)
 #+end_src
 
 * LSP
 
 #+begin_src emacs-lisp
-    (use-package lsp-mode
-      :ensure t
-      :hook (
-	     (c-mode . lsp)
-	     (c++-mode . lsp)
-	     (rust-mode . lsp)
-	     (go-mode-hook . lsp)
-	     (lsp-mode . lsp-enable-which-key-integration)
-	     (html-mode . lsp)
-	     )
-      :config
-      (general-define-key
-       :states '(normal visual)
-       :prefix "SPC"
-       "lf" 'lsp-format-buffer)
-      (general-define-key
-       :states '(normal visual)
-       :prefix "SPC"
-       "ca" 'lsp-execute-code-action)
-      (general-define-key
-       :states '(normal visual)
-       :prefix "SPC"
-       "rn" 'lsp-rename)
+  (use-package lsp-mode
+    :ensure t
+    :hook (
+	   (c-mode . lsp)
+	   (c++-mode . lsp)
+	   (rust-mode . lsp)
+	   (go-mode-hook . lsp)
+	   (lsp-mode . lsp-enable-which-key-integration)
+	   (html-mode . lsp)
+	   )
+    :config
+    (general-define-key
+     :states '(normal visual)
+     :prefix "SPC"
+     "lf" 'lsp-format-buffer)
+    (general-define-key
+     :states '(normal visual)
+     :prefix "SPC"
+     "ca" 'lsp-execute-code-action)
+    (general-define-key
+     :states '(normal visual)
+     :prefix "SPC"
+     "rn" 'lsp-rename)
 
-      )
+    )
 
-    (use-package lsp-ui
-      :ensure t
-      :commands lsp-ui-mode)
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode)
 
-    (use-package lsp-ivy
-      :ensure t
-      :commands lsp-ivy-workspace-symbol)
+  (use-package lsp-ivy
+    :ensure t
+    :commands lsp-ivy-workspace-symbol)
 
 
-    (use-package lsp-pyright
-      :ensure t
-      :hook (python-mode . (lambda ()
-	      (require 'lsp-pyright)
-	      (lsp))
-	     )
-      )
+  (use-package lsp-pyright
+    :ensure t
+    :hook (python-mode . (lambda ()
+	    (require 'lsp-pyright)
+	    (lsp))
+	   )
+    )
 #+end_src
 
 * Rust
 
 #+begin_src emacs-lisp
-    (use-package rust-mode
-      :ensure t
-      :config
-      )
+  (use-package rust-mode
+    :ensure t
+    :config
+    )
 #+end_src
 
 * Golang
 
 #+begin_src emacs-lisp
-    (use-package go-mode
-      :ensure t)
+  (use-package go-mode
+    :ensure t)
 #+end_src
 * Docker
 #+begin_src emacs-lisp
-
-
-
   (use-package dockerfile-mode
     :ensure t)
 
@@ -350,7 +350,24 @@
   (use-package poetry
     :ensure t
     )
-
-
-
+#+end_src
+* Terminal
+#+begin_src emacs-lisp
+  (use-package vterm-toggle
+	  :ensure t
+	  :config
+	  (general-define-key
+	  :states '(normal visual)
+	  :prefix "SPC"
+	  "tt" 'vterm-toggle-cd)
+  )
+  (use-package vterm
+  :ensure t
+  )
+#+end_src
+* Org Mode
+#+begin_src emacs-lisp
+  (require 'epa-file)
+  (epa-file-enable)
+  (setq epg-pinentry-mode 'loopback)
 #+end_src
