@@ -6,6 +6,7 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
+(add-hook 'window-setup-hook 'toggle-frame-maximized t)
 
   ;; setup package manager
 (require 'package)
@@ -148,10 +149,7 @@
   (setq dashboard-set-navigator t)
   (setq dashboard-set-heading-icons t)
   (setq dashboard-set-file-icons t)
-  (general-define-key
-   :states '(normal visual)
-   :prefix "SPC"
-   "pp" 'projectile-switch-project)
+
   )
 (use-package all-the-icons
   :ensure t)
@@ -217,6 +215,14 @@
   (projectile-mode +1)
   :config
   (setq projectile-project-search-path '("~/projects/" "~/school/"))
+  (general-define-key
+   :states '(normal visual)
+   :prefix "SPC"
+   "pp" 'projectile-switch-project)
+  (general-define-key
+   :states '(normal visual)
+   :prefix "SPC"
+   "tp" 'projectile-test-project)
   )
 
 ;;Development tools
@@ -298,8 +304,7 @@
 (use-package lsp-ui
   :ensure t
   :commands lsp-ui-mode
-  :config
-  (setq lsp-ui-doc-show-with-cursor t))
+  )
 
 (use-package lsp-ivy
   :ensure t
@@ -375,8 +380,8 @@
   :ensure t)
 
 (use-package treemacs-projectile
+  :after (treemacs projectile)
   :ensure t
-  :config
   )
 
 ;; Org mode
@@ -384,3 +389,59 @@
 (epa-file-enable)
 (setq epg-pinentry-mode 'loopback)
 
+;; ANSI color in compilation buffer
+(require 'ansi-color)
+(defun colorize-compilation-buffer ()
+  (toggle-read-only)
+  (ansi-color-apply-on-region (point-min) (point-max))
+  (toggle-read-only))
+(add-hook 'compilation-filter-hook 'colorize-compilation-buffer)
+
+;; Some key bindings
+
+(global-set-key [f3] 'next-match)
+(defun prev-match () (interactive nil) (next-match -1))
+(global-set-key [(shift f3)] 'prev-match)
+(global-set-key [backtab] 'auto-complete)
+;; OCaml configuration
+;;  - better error and backtrace matching
+
+(defun set-ocaml-error-regexp ()
+  (set
+   'compilation-error-regexp-alist
+   (list '("[Ff]ile \\(\"\\(.*?\\)\", line \\(-?[0-9]+\\)\\(, characters \\(-?[0-9]+\\)-\\([0-9]+\\)\\)?\\)\\(:\n\\(\\(Warning .*?\\)\\|\\(Error\\)\\):\\)?"
+    2 3 (5 . 6) (9 . 11) 1 (8 compilation-message-face)))))
+
+(add-hook 'tuareg-mode-hook 'set-ocaml-error-regexp)
+(add-hook 'caml-mode-hook 'set-ocaml-error-regexp)
+;; ## added by OPAM user-setup for emacs / base ## 56ab50dc8996d2bb95e7856a6eddb17b ## you can edit, but keep this line
+(require 'opam-user-setup   (expand-file-name "~/.config/emacs/opam-user-setup.el"))
+;; ## end of OPAM user-setup addition for emacs / base ## keep this line
+;; ANSI color in compilation buffer
+(require 'ansi-color)
+(defun colorize-compilation-buffer ()
+  (toggle-read-only)
+  (ansi-color-apply-on-region (point-min) (point-max))
+  (toggle-read-only))
+(add-hook 'compilation-filter-hook 'colorize-compilation-buffer)
+
+;; Some key bindings
+
+(global-set-key [f3] 'next-match)
+(defun prev-match () (interactive nil) (next-match -1))
+(global-set-key [(shift f3)] 'prev-match)
+(global-set-key [backtab] 'auto-complete)
+;; OCaml configuration
+;;  - better error and backtrace matching
+
+(defun set-ocaml-error-regexp ()
+  (set
+   'compilation-error-regexp-alist
+   (list '("[Ff]ile \\(\"\\(.*?\\)\", line \\(-?[0-9]+\\)\\(, characters \\(-?[0-9]+\\)-\\([0-9]+\\)\\)?\\)\\(:\n\\(\\(Warning .*?\\)\\|\\(Error\\)\\):\\)?"
+    2 3 (5 . 6) (9 . 11) 1 (8 compilation-message-face)))))
+
+(add-hook 'tuareg-mode-hook 'set-ocaml-error-regexp)
+(add-hook 'caml-mode-hook 'set-ocaml-error-regexp)
+;; ## added by OPAM user-setup for emacs / base ## 56ab50dc8996d2bb95e7856a6eddb17b ## you can edit, but keep this line
+(require 'opam-user-setup   (expand-file-name "~/.config/emacs/opam-user-setup.el"))
+;; ## end of OPAM user-setup addition for emacs / base ## keep this line
