@@ -1,43 +1,18 @@
 #+name: settings
 #+PROPERTY: header-args :tangle yes
 
-* fix annoying stuff
-
-#+begin_src emacs-lisp
-
+* Fix annoying stuff
+#+begin_src elisp
   ;;stop init screen
   (setq inhibit-startup-screen t)
+  (setq ring-bell-function 'ignore)
   (menu-bar-mode -1)
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
+  (add-hook 'window-setup-hook 'toggle-frame-maximized t)
 #+end_src
-* move files around
-#+begin_src emacs-lisp
-  ;; save all cache stuff into .cache
-  (setq user-emacs-directory (expand-file-name "~/.cache/emacs"))
-
-  ;; keep emacs clean
-  (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
-
-  (make-directory (expand-file-name "tmp/auto-saves" user-emacs-directory) t)
-
-  (setq auto-save-list-file-prefix (expand-file-name "tmp/auto-saves/sessions/" user-emacs-directory)
-	  auto-save-file-name-transforms `((".*" ,(expand-file-name "tmp/auto-saves/" user-emacs-directory) t)))
-
-
-  (setq create-lockfiles nil)
-
-  ;;set custom file
-  (setq custom-file "~/.emacs.d/emacs-custom.el")
-  (load custom-file)
-#+end_src
-* Fonts
-#+begin_src emacs-lisp
-    ;;font
-    (set-face-attribute 'default nil :font "FiraCode NFM" :height 140)
-#+end_src
-* Useful settings
-#+begin_src emacs-lisp
+* Useful Settings
+#+begin_src elisp
   ;;show matching delimters
   (show-paren-mode)
 
@@ -50,18 +25,49 @@
   ;;set line numbers to be shown
   (setq display-line-numbers-type 'relative)
   (global-display-line-numbers-mode)
+
 #+end_src
+* move files around
+#+begin_src elisp
+  ;; save all cache stuff into .cache
+  (setq user-emacs-directory (expand-file-name "~/.cache/emacs"))
+
+     ;; keep emacs clean
+  (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
+
+  (make-directory (expand-file-name "tmp/auto-saves" user-emacs-directory) t)
+
+  (setq auto-save-list-file-prefix (expand-file-name "tmp/auto-saves/sessions/" user-emacs-directory)
+     auto-save-file-name-transforms `((".*" ,(expand-file-name "tmp/auto-saves/" user-emacs-directory) t)))
+  (setq create-lockfiles nil)
+
+  (unless (file-exists-p (expand-file-name "emacs-custom.el" user-emacs-directory))
+    (write-region "" nil (expand-file-name "emacs-custom.el" user-emacs-directory)))
+  ;;set custom file
+  (setq custom-file (expand-file-name "emacs-custom.el" user-emacs-directory))
+  (load custom-file)
+#+end_src
+* Fonts
+#+begin_src elisp
+  (set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 140)
+  ;;useful settings
+#+end_src
+
 * Themes
-#+begin_src emacs-lisp
+#+begin_src elisp
   ;;set theme
   (use-package doom-themes
     :ensure t
     :config
     (load-theme 'doom-acario-dark t)
     )
+  (use-package doom-modeline
+    :ensure t
+    :hook (after-init . doom-modeline-mode)
+    )
 #+end_src
 * Evil mode
-#+begin_src emacs-lisp
+#+begin_src elisp
   (use-package evil
     :ensure t
     :init
@@ -95,88 +101,100 @@
     (add-hook 'magit-mode-hook 'turn-off-evil-snipe-override-mode)
     )
 
-    (use-package undo-tree
-      :ensure t
-      :after evil
-      :config
-      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
-      (evil-set-undo-system 'undo-tree)
-      (global-undo-tree-mode 1)
-    )
+  (use-package undo-tree
+    :ensure t
+    :after evil
+    :config
+    (defvar undo-tree-history-directory (concat user-emacs-directory "undo/") "Undo tree history directory")
+    (unless (file-exists-p undo-tree-history-directory)
+      (make-directory undo-tree-history-directory t))
+    (setq undo-tree-history-directory-alist `(("." . ,undo-tree-history-directory)))
 
+    (evil-set-undo-system 'undo-tree)
+    (global-undo-tree-mode 1)
+    )
 #+end_src
 * Random
-#+begin_src emacs-lisp
-
+#+begin_src elisp
   (use-package general
     :ensure t
     :init
     (general-evil-setup)
     )
-  ;; Replace 'hydra-space/body with your leader function.
-
 
   (use-package avy
     :ensure t
     :config
     (general-define-key
-    :states '(normal visual)
-    :prefix "SPC"
-    "jj" 'avy-goto-char)
+     :states '(normal visual)
+     :prefix "SPC"
+     "jj" 'avy-goto-char)
     )
 
-    (use-package dashboard
-      :ensure t
-      :config
-      (dashboard-setup-startup-hook)
-      (setq dashboard-items '(
-			      (recents . 5)
-			      (projects . 5)
-			      (agenda . 5)
-			      )
-	    )
-      ;; (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
-      (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
-      (setq dashboard-set-init-info t)
-      (setq dashboard-set-navigator t)
-      (setq dashboard-set-heading-icons t)
-      (setq dashboard-set-file-icons t)
-      )
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook)
+    (setq dashboard-items '(
+			    (recents . 5)
+			    (projects . 5)
+			    (agenda . 5)
+			    )
+	  )
+    (setq projectile-switch-project-action #'projectile-dired)
+    ;; (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
+    (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
+    (setq dashboard-set-init-info t)
+    (setq dashboard-set-navigator t)
+    (setq dashboard-set-heading-icons t)
+    (setq dashboard-set-file-icons t)
+
+    )
   (use-package all-the-icons
     :ensure t)
-
-  (use-package doom-modeline
-    :ensure t
-    :hook (after-init . doom-modeline-mode)
-    )
 
   (use-package page-break-lines
     :ensure t
     :init
     (global-page-break-lines-mode)
     )
+
+  (use-package which-key
+    :ensure t
+    :init (which-key-mode)
+    :config (setq which-key-idle-delay 1)
+    )
+  ;; get the correct path
+  (use-package exec-path-from-shell
+    :ensure t
+    :config
+    (when (daemonp)
+      (exec-path-from-shell-initialize))
+    )
+
 #+end_src
-* Ivy and Projectile
-#+begin_src emacs-lisp
+* Vertico and projectile
+#+begin_src elisp
   (use-package vertico
     :ensure t
     :init (vertico-mode)
     :bind (:map vertico-map
-	  ("C-j" . vertico-next)
-	  ("C-k" . vertico-previous)
-     )
+		("C-j" . vertico-next)
+		("C-k" . vertico-previous)
+		)
     :config
     (general-define-key
      :states '(normal visual)
      :prefix "SPC"
-     "ff" 'find-file)
+     "ff" 'find-file
+     )
     )
 
   (use-package marginalia
     :ensure t
     :bind (:map minibuffer-local-map
-	  ("M-A" . marginalia-cycle)
-	  )
+		("M-A" . marginalia-cycle)
+		)
     :init (marginalia-mode))
 
   (use-package orderless
@@ -194,67 +212,58 @@
      "fw" 'consult-ripgrep)
     )
 
-  (use-package which-key
-    :ensure t
-    :init (which-key-mode)
-    :config (setq which-key-idle-delay 1)
-    )
-
   (use-package projectile
     :ensure t
     :init
     (projectile-mode +1)
     :config
     (setq projectile-project-search-path '("~/projects/" "~/school/"))
+    (general-define-key
+     :states '(normal visual)
+     :prefix "SPC"
+     "pp" 'projectile-switch-project)
+    (general-define-key
+     :states '(normal visual)
+     :prefix "SPC"
+     "tp" 'projectile-test-project)
     )
 #+end_src
 * Development tools
-#+begin_src emacs-lisp
-    (use-package flycheck
-      :ensure t
-      )
-    (use-package company
-      :ensure t
-      :after lsp-mode
-      :hook ('after-init-hook 'global-company-mode)
-      :custom
-      (company-minimum-prefix-length 1)
-      (company-idle-delay 0.0)
-      )
-
-    (use-package magit
-      :ensure t
-      :config
-      (general-define-key
-       :states '(normal visual)
-       :prefix "SPC"
-       "mg" 'magit
-       )
-      )
-
-    (use-package tree-sitter
-      :ensure t
-      )
-
-    (use-package tree-sitter-langs
-      :ensure t
-      :config
-      (require 'tree-sitter-langs)
-      (global-tree-sitter-mode)
-      (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+#+begin_src elisp
+  (use-package flycheck
+    :ensure t
+    )
+  (use-package company
+    :ensure t
+    :after lsp-mode
+    :hook ('after-init-hook 'global-company-mode)
+    :custom
+    (company-minimum-prefix-length 1)
+    (company-idle-delay 0.0)
     )
 
-    ;; get the correct path
-    (use-package exec-path-from-shell
-      :ensure t
-      :config
-      (when (daemonp)
-	(exec-path-from-shell-initialize))
-      )
+  (use-package magit
+    :ensure t
+    :config
+    (general-define-key
+     :states '(normal visual)
+     :prefix "SPC"
+     "mg" 'magit
+     )
+    )
 
-#+end_src
-* Snippets
-#+begin_src emacs-lisp
+  (use-package tree-sitter
+    :ensure t
+    )
+
+  (use-package tree-sitter-langs
+    :ensure t
+    :config
+    (require 'tree-sitter-langs)
+    (global-tree-sitter-mode)
+    (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+    )
+  ;; Snippets
   (use-package yasnippet
     :ensure t
     :init
@@ -264,25 +273,20 @@
   (use-package yasnippet-snippets
     :ensure t)
 #+end_src
-
 * LSP
-
-#+begin_src emacs-lisp
+#+begin_src elisp
   (use-package lsp-mode
     :ensure t
     :hook (
-	   (c-mode . lsp)
-	   (c++-mode . lsp)
-	   (rust-mode . lsp)
-	   (go-mode-hook . lsp)
-	   (lsp-mode . lsp-enable-which-key-integration)
-	   (html-mode . lsp)
+	   (prog-mode-hook . lsp)
+	   (prog-mode . lsp-deferred)
 	   )
     :config
     (general-define-key
      :states '(normal visual)
      :prefix "SPC"
      "lf" 'lsp-format-buffer)
+
     (general-define-key
      :states '(normal visual)
      :prefix "SPC"
@@ -291,12 +295,13 @@
      :states '(normal visual)
      :prefix "SPC"
      "rn" 'lsp-rename)
-
+    (setq lsp-warn-no-matched-clients nil)
     )
 
   (use-package lsp-ui
     :ensure t
-    :commands lsp-ui-mode)
+    :commands lsp-ui-mode
+    )
 
   (use-package lsp-ivy
     :ensure t
@@ -306,29 +311,29 @@
   (use-package lsp-pyright
     :ensure t
     :hook (python-mode . (lambda ()
-	    (require 'lsp-pyright)
-	    (lsp))
-	   )
+			   (require 'lsp-pyright)
+			   (lsp))
+		       )
+    )
+
+  (use-package lsp-java
+    :ensure t
     )
 #+end_src
-
 * Rust
-
-#+begin_src emacs-lisp
+#+begin_src elisp
   (use-package rust-mode
     :ensure t
     :config
     )
 #+end_src
-
 * Golang
-
-#+begin_src emacs-lisp
+#+begin_src elisp
   (use-package go-mode
     :ensure t)
 #+end_src
 * Docker
-#+begin_src emacs-lisp
+#+begin_src elisp
   (use-package dockerfile-mode
     :ensure t)
 
@@ -341,32 +346,45 @@
      "dc" 'docker
      )
     )
-
-  (use-package docker-tramp
-    :ensure t)
 #+end_src
 * Python
-#+begin_src emacs-lisp
+#+begin_src elisp
   (use-package poetry
     :ensure t
     )
 #+end_src
 * Terminal
-#+begin_src emacs-lisp
+#+begin_src elisp
   (use-package vterm-toggle
-	  :ensure t
-	  :config
-	  (general-define-key
-	  :states '(normal visual)
-	  :prefix "SPC"
-	  "tt" 'vterm-toggle-cd)
-  )
+    :ensure t
+    :config
+    (general-define-key
+     :states '(normal visual)
+     :prefix "SPC"
+     "tt" 'vterm-toggle-cd)
+    )
   (use-package vterm
-  :ensure t
-  )
+    :ensure t
+    )
 #+end_src
-* Org Mode
-#+begin_src emacs-lisp
+* Treemacs
+#+begin_src elisp
+  (use-package treemacs
+    :ensure t
+    :config
+    (setq treemacs-width 25))
+
+  (use-package treemacs-evil
+    :ensure t)
+
+  (use-package treemacs-projectile
+    :after (treemacs projectile)
+    :ensure t
+    )
+#+end_src
+
+* Org mode
+#+begin_src elisp
   (require 'epa-file)
   (epa-file-enable)
   (setq epg-pinentry-mode 'loopback)
